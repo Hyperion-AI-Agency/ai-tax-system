@@ -96,7 +96,7 @@
     "cypress": "^15.7.0",
     "drizzle-kit": "^0.31.7",
     "eslint": "^9.39.1",
-    "eslint-config-next": "^15.0.0",
+    "eslint-config-next": "^16.2.4",
     "jsdom": "^25.0.1",
     "tailwindcss": "^4.1.17",
     "tw-animate-css": "catalog:",
