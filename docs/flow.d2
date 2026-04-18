@@ -3,12 +3,24 @@
 
 shape: sequence_diagram
 
-cpa: CPA
-api: API
-storage: S3 + Queue
-ocr: OCR Worker
-claude: Claude
-target: "ProConnect /\nDrakeTax"
+cpa: CPA {
+  icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/user-round.svg
+}
+api: FastAPI {
+  icon: https://cdn.simpleicons.org/fastapi
+}
+storage: S3 + Queue {
+  icon: https://icons.terrastruct.com/aws%2FStorage%2FAmazon-Simple-Storage-Service-S3.svg
+}
+ocr: OCR Worker {
+  icon: https://cdn.simpleicons.org/celery
+}
+claude: Claude {
+  icon: https://cdn.simpleicons.org/anthropic
+}
+target: "ProConnect /\nDrakeTax" {
+  icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/file-text.svg
+}
 
 cpa -> api: "1. Upload tax return"
 api -> storage: "2. Encrypted store + enqueue"

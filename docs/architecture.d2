@@ -4,52 +4,53 @@
 direction: down
 
 cpa: CPA User {
-  shape: person
+  icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/user-round.svg
 }
 
 web: Web Portal {
-  style.font-size: 18
+  icon: https://cdn.simpleicons.org/nextdotjs
 }
 
 api: FastAPI Gateway {
-  style.font-size: 18
+  icon: https://cdn.simpleicons.org/fastapi
 }
 
 pipeline: "Extraction Pipeline" {
-  style.font-size: 18
   style.bold: true
 
-  ocr: OCR Worker
-  claude: Claude Extraction
+  ocr: OCR Worker {
+    icon: https://cdn.simpleicons.org/celery
+  }
+  claude: Claude Extraction {
+    icon: https://cdn.simpleicons.org/anthropic
+  }
   review: Review Queue {
-    shape: queue
+    icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/list-checks.svg
   }
 }
 
 data: "Data Layer" {
-  style.font-size: 18
   style.bold: true
 
   s3: Encrypted S3 {
-    shape: cylinder
+    icon: https://icons.terrastruct.com/aws%2FStorage%2FAmazon-Simple-Storage-Service-S3.svg
   }
   db: Postgres {
-    shape: cylinder
+    icon: https://cdn.simpleicons.org/postgresql
   }
 }
 
 external: "External Services" {
-  style.font-size: 18
   style.bold: true
 
   textract: AWS Textract {
-    shape: cloud
+    icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/scan-text.svg
   }
   claude_api: Anthropic Claude {
-    shape: cloud
+    icon: https://cdn.simpleicons.org/anthropic
   }
   target: "ProConnect / DrakeTax" {
-    shape: cloud
+    icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/file-text.svg
   }
 }
 
@@ -61,6 +62,6 @@ pipeline.ocr -> external.textract
 pipeline.ocr -> pipeline.claude
 pipeline.claude -> external.claude_api
 pipeline.claude -> pipeline.review: "Low confidence"
-pipeline.claude -> data.db: "High confidence fields"
-pipeline.review -> data.db: "After human review"
-data.db -> external.target: "Export return"
+pipeline.claude -> data.db: "High confidence"
+pipeline.review -> data.db: "After review"
+data.db -> external.target: "Export"

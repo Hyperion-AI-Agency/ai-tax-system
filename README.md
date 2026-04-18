@@ -5,7 +5,7 @@
 ### AI-powered tax return processing for CPA firms. OCR, Claude extraction, confidence-gated review, ProConnect and DrakeTax export.
 
 ![License](https://img.shields.io/badge/license-MIT-3b82f6)
-![Built by HyperionAI](https://img.shields.io/badge/built_by-HyperionAI-0f172a)
+![Built by Hyperion AI](https://img.shields.io/badge/built_by-Hyperion_AI-0f172a)
 ![Stack](https://img.shields.io/badge/stack-Next.js_·_FastAPI_·_Claude-64748b)
 
 [View Design Doc (PDF)](DESIGN_DOC.pdf) · [Architecture](docs/architecture.md) · [Implementation Plan](IMPLEMENTATION_PLAN.md)
@@ -72,35 +72,45 @@ pnpm dev
 
 ---
 
-<div align="center">
-
-## About the author
-
-<img src="https://hyperionai.dev/founder.png" width="120" style="border-radius:50%" alt="Vitalijus Alsauskas" />
+<table>
+<tr>
+<td width="180" valign="top">
+<img src="https://hyperionai.dev/founder.png" width="160" alt="Vitalijus Alsauskas" />
+</td>
+<td valign="top">
 
 ### Vitalijus Alsauskas
 
-Founder, HyperionAI
+Software and AI Engineer
+
+Software dev from Lithuania, worked at IBM, living in Vietnam. Building enterprise-level tools for startups and companies.
 
 [LinkedIn](https://www.linkedin.com/in/vitalijus-hyperion/) · [GitHub](https://github.com/Vitals9367) · [hyperionai.dev](https://hyperionai.dev)
 
-</div>
-
-4 years at IBM on Fortune 500 systems, including AskProcurement (chatbot integrating Dun & Bradstreet data for procurement teams). Now building production AI systems for founders and agencies. Currently running Claude in production on Fit7D (FastAPI + Claude dialogue platform) and Adboard (Next.js + Supabase + Claude API with OAuth into Meta, Google, Shopify).
+</td>
+</tr>
+</table>
 
 ---
 
-<div align="center">
+<table>
+<tr>
+<td width="180" valign="top">
 
-## Interested in building something like this?
+### Book a call
 
-I offer a free 30-minute scoping call for teams considering this pattern.
+Free 30-minute scoping session for teams considering this pattern.
 
-### [Book a call](https://cal.com/vitalijus-alsauskas/project-request?overlayCalendar=true)
+</td>
+<td valign="top">
 
-or reach out via [LinkedIn](https://www.linkedin.com/in/vitalijus-hyperion/)
+**[cal.com/vitalijus-alsauskas/project-request](https://cal.com/vitalijus-alsauskas/project-request?overlayCalendar=true)**
 
-</div>
+Or reach out via [LinkedIn](https://www.linkedin.com/in/vitalijus-hyperion/).
+
+</td>
+</tr>
+</table>
 
 ---
 
