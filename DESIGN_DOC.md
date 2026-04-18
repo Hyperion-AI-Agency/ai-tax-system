@@ -1,16 +1,22 @@
-# Tax Workflow Automation - System Design
+# Tax Workflow Automation — System Design
 
-**Prepared for:** CPA firm (Upwork, 2026-04-18)
-**Prepared by:** Vitalijus Alsauskas / HyperionAI
-**Scope:** AI-driven tax return processing that extracts structured data from uploaded documents and hands off to ProConnect or DrakeTax.
-
----
+| | |
+|---|---|
+| **Prepared for** | CPA firm (Upwork, 2026-04-18) |
+| **Prepared by** | Vitalijus Alsauskas · Hyperion AI |
+| **Scope** | AI-driven tax return processing — OCR + Claude extraction + ProConnect / DrakeTax export |
 
 ## 1. Problem Framing
 
-You want a secure, repeatable system where CPAs upload tax documents, an LLM extracts the fields you need, and the output lands in a format ProConnect or DrakeTax can import. The hard part isn't the LLM call. It's keeping accuracy consistent across document variants (scanned 1099s, prior-year returns with handwritten notes, K-1s) and making sure PII never leaks. A naive pipeline ships as an impressive demo and falls over the first real return.
+**The hard part isn't the LLM call** — it's keeping accuracy consistent across document variants and making sure PII never leaks.
 
-This doc shows how I'd architect it to be production-safe from day one, with an honest audit trail and a human review step for anything the model isn't confident about.
+Naive AI tax pipelines fail in predictable ways:
+
+- **Messy document variants** — scanned 1099s, prior-year returns with handwritten notes, K-1s with non-standard layouts
+- **Silent hallucinations** — the model returns a plausible number that's wrong, it ships to ProConnect, the CPA catches it weeks later
+- **PII leaks** — SSNs and ITINs land in LLM provider logs that shouldn't have them
+
+This design makes all three **impossible by construction**: OCR-first reduces hallucination surface, per-field confidence gates route uncertain data to human review, and prompt-level PII redaction keeps sensitive data out of the model provider entirely.
 
 ---
 
@@ -18,9 +24,9 @@ This doc shows how I'd architect it to be production-safe from day one, with an 
 
 ![System Diagram](docs/architecture.svg)
 
-Source: [`docs/architecture.d2`](docs/architecture.d2)
+Every extracted field carries a **confidence score**. High-confidence fields flow straight to mapping. Anything below threshold drops into a **human review queue** before it ever reaches ProConnect or DrakeTax.
 
-Every extracted field carries a confidence score. High-confidence fields flow straight to mapping. Anything below threshold drops into a human review queue before it ever reaches ProConnect or DrakeTax.
+Source: [`docs/architecture.d2`](docs/architecture.d2)
 
 ---
 
@@ -43,103 +49,79 @@ Every extracted field carries a confidence score. High-confidence fields flow st
 
 ![Processing Flow](docs/flow.svg)
 
-Source: [`docs/flow.d2`](docs/flow.d2)
-
 ### Happy path (~80% of returns)
 
-1. CPA uploads a return via signed upload URL - file lands in encrypted S3, audit log entry written
-2. Worker picks up the file, runs OCR, stores raw text plus layout metadata
-3. Claude extracts the structured fields you need, returning confidence scores per value
-4. All fields above the confidence threshold flow to the mapping layer
-5. Mapping outputs a ProConnect or DrakeTax-ready record
-6. CPA downloads the mapped output when ready
+1. **Upload** — CPA uploads via signed URL; file lands in encrypted S3, audit log entry written
+2. **OCR** — worker picks up file, runs Textract, stores raw text + layout metadata
+3. **Extract** — Claude returns structured fields with per-value confidence scores
+4. **Gate** — fields ≥ threshold flow straight to mapping; below threshold enter review
+5. **Map** — Python mapper produces ProConnect- or DrakeTax-ready record
+6. **Deliver** — CPA downloads the mapped output when ready
 
 ### Low-confidence path (~15-20% of returns)
 
-- Any field below the threshold (e.g., < 0.85 on a $ value) drops into a review queue
-- CPA opens the Review UI, sees the original document region next to the extracted value
-- CPA corrects or approves, the fix is logged against the field for future model prompting
-- Only then does the field flow to the mapping layer
+- Any field below threshold (e.g. **< 0.85 on a $ value**) drops into the review queue
+- CPA opens the Review UI with original document region next to extracted value
+- CPA corrects or approves; fix logged against field for future prompt tuning
+- Only **after human approval** does the field flow to mapping
 
 ### Error paths
 
-- **OCR fails or returns garbage**: returns are flagged as "unprocessable" and routed to a manual-entry queue
-- **LLM timeout or rate limit**: retry with exponential backoff, fall back to a secondary model after 3 failures
-- **S3 upload fails**: user sees a clear error, nothing partial is stored
-- **Mapping layer rejects a field**: blocks the export, surfaces a structured error to the CPA with a "fix field" link
-- **PII leak risk**: prompts are redacted before being sent to Claude (SSNs and ITINs replaced with tokens); if a prompt would include one, it is stripped and the field goes straight to manual review
+| Failure | Handling |
+|---|---|
+| **OCR fails / returns garbage** | Return flagged `unprocessable`, routed to manual-entry queue |
+| **LLM timeout or rate limit** | Exponential backoff; fallback to secondary model after 3 failures |
+| **S3 upload fails** | Clear error to user; nothing partial stored |
+| **Mapping layer rejects a field** | Blocks export; surfaces structured error with "fix field" link |
+| **PII leak risk** | Prompts redacted (SSN/ITIN → tokens); any unredactable prompt skips LLM entirely, field goes straight to manual review |
 
 ---
 
 ## 5. Component Breakdown
 
-- **Ingest Service** (FastAPI + signed S3 URLs) - handles uploads, validation, encryption at rest, audit logging. Nothing touches the LLM at this stage.
-- **OCR Worker** (Celery task + AWS Textract) - pulls from S3, parses to structured text + layout, writes back to a processing bucket.
-- **Extraction Worker** (Celery task + Anthropic SDK) - Claude extracts the 30-50 fields you care about with JSON output + confidence scores.
-- **Review UI** (Next.js route under `/review`) - list of low-confidence fields, inline corrections, audit trail per correction.
-- **Mapping Layer** (Python module per target: `proconnect.py`, `draketax.py`) - isolates target-specific format logic so one software's quirks don't break the other.
-- **Export Service** (FastAPI endpoint) - generates the final file in ProConnect or DrakeTax format when CPA marks a return ready.
-- **Audit & Observability** (Sentry + structured logs + immutable S3 audit bucket) - every action logged, every mutation traceable, breach response ready.
+| Component | Stack | Responsibility |
+|---|---|---|
+| **Ingest Service** | FastAPI + signed S3 URLs | Uploads, validation, encryption at rest, audit logging. Nothing touches the LLM here. |
+| **OCR Worker** | Celery + AWS Textract | Pulls from S3, parses to text + layout, writes to processing bucket. |
+| **Extraction Worker** | Celery + Anthropic SDK | Claude extracts 30-50 fields with JSON output + confidence scores. |
+| **Review UI** | Next.js route `/review` | Low-confidence field inspector, inline corrections, audit trail per edit. |
+| **Mapping Layer** | `proconnect.py`, `draketax.py` | One module per target isolates format quirks so one doesn't break the other. |
+| **Export Service** | FastAPI endpoint | Generates final file in target format when CPA marks return ready. |
+| **Audit & Observability** | Sentry + structured logs + immutable S3 | Every action logged, every mutation traceable, breach response ready. |
 
 ---
 
 ## 6. Implementation Phases
 
-### Phase 1: Foundation (week 1-2)
-**Ships:** End-to-end walking skeleton for one document type (say, a 1099-MISC).
-
-- Upload portal with signed URLs + encrypted S3
-- Textract OCR wired up, raw output stored
-- Claude extraction for ~10 core fields, confidence scores
-- Basic review queue UI (no fancy styling, just functional)
-- Audit logging on every action
-- Deployment pipeline (push to main → staging)
-
-### Phase 2: Coverage (week 3-4)
-**Ships:** Full field coverage for the 5 most common tax forms.
-
-- Expand extraction to 1040, 1099s (MISC/NEC/INT/DIV), K-1, W-2, Schedule C
-- Tune confidence thresholds per field type
-- Mapping layer for ProConnect
-- Review UI polish: original doc region preview next to extracted value
-- Load testing at expected season volume
-
-### Phase 3: Production + Handoff (week 5-6)
-**Ships:** Second target mapping + observability + runbook.
-
-- Mapping layer for DrakeTax
-- Sentry alerts wired into Slack/email
-- Runbook for oncall CPA (what to do when review queue fills up, how to re-process a failed return)
-- Knowledge transfer session + recorded walkthrough
+| Phase | Weeks | Ships | Key milestones |
+|---|---|---|---|
+| **1. Foundation** | 1-2 | End-to-end skeleton for one document type (1099-MISC) | Upload portal, Textract wired up, Claude extracts ~10 fields, basic review UI, deployment pipeline to staging |
+| **2. Coverage** | 3-4 | Full field coverage for 5 most common forms | 1040, 1099s (MISC/NEC/INT/DIV), K-1, W-2, Schedule C; ProConnect mapper; polished review UI; load tested at season volume |
+| **3. Production** | 5-6 | Second target + observability + handoff | DrakeTax mapper; Sentry→Slack alerts; oncall runbook; knowledge transfer session + recorded walkthrough |
 
 ---
 
 ## 7. Risks & Mitigations
 
-1. **Risk:** Claude hallucinates field values on messy scans, wrong numbers reach ProConnect.
-   **Mitigation:** Confidence scoring + review queue catches anything below threshold. Nothing exports without either high model confidence OR human approval. Every auto-approved field is still logged with the source coordinates so you can audit retroactively.
-
-2. **Risk:** PII leaks through LLM prompts or model provider retention.
-   **Mitigation:** Anthropic zero-retention flag enabled, SSNs and ITINs redacted before prompts (replaced with reversible tokens), audit log of every prompt sent. Data never leaves your AWS account except for the specific LLM call, and the LLM call is scrubbed.
-
-3. **Risk:** Volume spike during tax season breaks the pipeline.
-   **Mitigation:** Celery workers autoscale on queue depth, queue depth alerts at 100, fallback to a cheaper model (Claude Haiku) under extreme load so nothing stalls. Load tested to 3x expected season volume.
-
-4. **Risk:** ProConnect or DrakeTax changes their import format mid-season.
-   **Mitigation:** Mapping layer is isolated per target, so a format change in one doesn't break the other. Integration tests run against sample imports nightly, alerting on any regression.
-
-5. **Risk:** A CPA makes a correction in the Review UI that would corrupt historical data.
-   **Mitigation:** All corrections are append-only (no overwrites), every correction carries the CPA's user ID + timestamp, original extraction is preserved. If a bad correction ships, you can replay from the audit log.
+| # | Risk | Mitigation |
+|---|---|---|
+| 1 | **Claude hallucinates values** on messy scans, wrong numbers reach ProConnect | Confidence scoring + review queue. Nothing exports without high model confidence OR human approval. Auto-approved fields still logged with source coordinates for retroactive audit. |
+| 2 | **PII leaks** through LLM prompts or provider retention | Anthropic zero-retention flag on. SSN/ITIN redacted before prompts (reversible tokens). Audit log of every prompt. Data never leaves your AWS account except the scrubbed LLM call. |
+| 3 | **Tax-season volume spike** breaks the pipeline | Celery autoscales on queue depth. Depth alerts at 100. Fallback to Claude Haiku under extreme load so nothing stalls. Load tested at 3× season volume. |
+| 4 | **ProConnect / DrakeTax** changes import format mid-season | Mapping layer isolated per target — one format change doesn't break the other. Nightly integration tests against sample imports alert on regressions. |
+| 5 | **CPA correction corrupts historical data** | All corrections append-only. Every correction carries user ID + timestamp. Original extraction preserved. Bad corrections replayable from audit log. |
 
 ---
 
 ## 8. What I Need From You
 
-- **5-10 real returns (redacted is fine)** so I can calibrate extraction accuracy on your actual document mix, not synthetic test data
-- **Access to a test ProConnect and/or DrakeTax account** for the mapping layer
-- **Your field priorities** - which 20-30 fields are must-haves vs nice-to-haves (I can send a suggested list if helpful)
-- **Confirmation on data residency** - is US-only required, or is this more flexible?
-- **A 30-min kickoff call** to walk through this doc together and tighten the scope before any code ships
+To move into Phase 1, a few inputs from your side:
+
+- **5-10 real returns** (redacted is fine) — calibrates extraction accuracy on your actual document mix, not synthetic data
+- **Test ProConnect or DrakeTax account** — for the mapping layer
+- **Field priorities** — which 20-30 fields are must-haves vs. nice-to-haves (I can send a suggested list)
+- **Data residency confirmation** — US-only, or flexible?
+- **30-minute kickoff call** — to walk this through and tighten scope before any code ships
 
 ---
 
