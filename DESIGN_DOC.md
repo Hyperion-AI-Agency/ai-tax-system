@@ -41,6 +41,10 @@ Every extracted field carries a confidence score. High-confidence fields flow st
 
 ## 4. Data Flow
 
+![Processing Flow](docs/flow.svg)
+
+Source: [`docs/flow.d2`](docs/flow.d2)
+
 ### Happy path (~80% of returns)
 
 1. CPA uploads a return via signed upload URL - file lands in encrypted S3, audit log entry written
