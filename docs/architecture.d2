@@ -32,20 +32,12 @@ classes: {
   }
 }
 
-# --- Row 0: spacer | entry | spacer-or-observability ---
+# 3x3 layout:
+# Row 0: spacer | data | spacer-or-observability
+# Row 1: user   | app  | processing
+# Row 2: spacer | integrations | spacer
 
 spacer_tl: "" { class: hidden }
-
-entry_slot: "" { class: hidden
-  entry: CPA User {
-    class: card
-    icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/user-round.svg
-  }
-}
-
-spacer_tr: "" { class: hidden }
-
-# --- Row 1: data | app | integrations ---
 
 data_zone: "Data" {
   grid-columns: 2
@@ -57,6 +49,15 @@ data_zone: "Data" {
   storage: S3 (KMS) {
     class: card
     icon: https://icons.terrastruct.com/aws%2FStorage%2FAmazon-Simple-Storage-Service-S3.svg
+  }
+}
+
+spacer_tr: "" { class: hidden }
+
+entry_slot: "" { class: hidden
+  entry: CPA User {
+    class: card
+    icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/user-round.svg
   }
 }
 
@@ -73,27 +74,6 @@ app_zone: "App" {
   }
 }
 
-integrations_zone: "3rd Party Integrations" {
-  grid-columns: 3
-  grid-gap: 80
-  claude: Claude API {
-    class: card
-    icon: https://cdn.simpleicons.org/anthropic
-  }
-  proconnect: ProConnect {
-    class: card
-    icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/file-text.svg
-  }
-  draketax: DrakeTax {
-    class: card
-    icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/file-text.svg
-  }
-}
-
-# --- Row 2: spacer | processing | spacer ---
-
-spacer_bl: "" { class: hidden }
-
 processing_zone: "Extraction Pipeline" {
   grid-columns: 1
   grid-gap: 80
@@ -108,6 +88,25 @@ processing_zone: "Extraction Pipeline" {
   review: Review Queue {
     class: card
     icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/list-checks.svg
+  }
+}
+
+spacer_bl: "" { class: hidden }
+
+integrations_zone: "3rd Party Integrations" {
+  grid-columns: 3
+  grid-gap: 80
+  claude: Claude API {
+    class: card
+    icon: https://cdn.simpleicons.org/anthropic
+  }
+  proconnect: ProConnect {
+    class: card
+    icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/file-text.svg
+  }
+  draketax: DrakeTax {
+    class: card
+    icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/file-text.svg
   }
 }
 
