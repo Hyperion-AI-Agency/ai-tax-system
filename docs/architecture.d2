@@ -28,7 +28,7 @@ classes: {
   }
 }
 
-# Entry point - outside the system
+# Order controls grid position. app_zone at position 1 = top-center.
 cpa: CPA User {
   class: card
   icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/user-round.svg
@@ -56,9 +56,9 @@ extraction_zone: "Extraction Pipeline" {
     class: card
     icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/scan-text.svg
   }
-  claude: Claude Extraction {
+  extractor: Extraction Worker {
     class: card
-    icon: https://cdn.simpleicons.org/anthropic
+    icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/cog.svg
   }
   review: Review Queue {
     class: card
@@ -81,6 +81,13 @@ data_zone: "Data" {
 }
 
 integrations_zone: "3rd Party Integrations" {
+  grid-columns: 2
+  grid-gap: 30
+
+  claude: Claude API {
+    class: card
+    icon: https://cdn.simpleicons.org/anthropic
+  }
   target: ProConnect / DrakeTax {
     class: card
     icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/file-text.svg
@@ -90,8 +97,11 @@ integrations_zone: "3rd Party Integrations" {
 cpa -> app_zone.web: "1. Upload return"
 app_zone.web -> app_zone.api: "2. POST /returns"
 app_zone.api -> extraction_zone.ocr: "3. Enqueue"
-extraction_zone.ocr -> extraction_zone.claude: "4. Extract"
-extraction_zone.claude -> extraction_zone.review: "5. Low-confidence"
-extraction_zone -> app_zone.api: "6. Verified fields"
-app_zone.api -> data_zone: "7. Persist"
-app_zone.api -> integrations_zone.target: "8. Export"
+extraction_zone.ocr -> extraction_zone.extractor: "4. OCR text"
+extraction_zone.extractor -> integrations_zone.claude: "5. Extract fields" {
+  style.stroke-dash: 3
+}
+extraction_zone.extractor -> extraction_zone.review: "6. Low-confidence"
+extraction_zone -> app_zone.api: "7. Verified"
+app_zone.api -> data_zone: "8. Persist"
+app_zone.api -> integrations_zone.target: "9. Export"
