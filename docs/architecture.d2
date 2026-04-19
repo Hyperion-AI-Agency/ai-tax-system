@@ -8,8 +8,6 @@ vars: {
 }
 
 direction: right
-grid-columns: 3
-grid-gap: 240
 
 classes: {
   card: {
@@ -28,22 +26,15 @@ classes: {
   }
 }
 
-# Transparent wrapper so the cell absorbs grid stretch but the card stays card-sized.
-user_slot: "" {
-  style.fill: transparent
-  style.stroke: transparent
-  style.stroke-width: 0
-  style.shadow: false
-
-  cpa: CPA User {
-    class: card
-    icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/user-round.svg
-  }
+# Entry point on the left - bare card, no zone wrapper.
+cpa: CPA User {
+  class: card
+  icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/user-round.svg
 }
 
 app_zone: "App" {
   grid-columns: 2
-  grid-gap: 160
+  grid-gap: 40
 
   web: Next.js Upload {
     class: card
@@ -57,7 +48,7 @@ app_zone: "App" {
 
 extraction_zone: "Extraction Pipeline" {
   grid-columns: 3
-  grid-gap: 160
+  grid-gap: 40
 
   ocr: OCR Worker {
     class: card
@@ -75,7 +66,7 @@ extraction_zone: "Extraction Pipeline" {
 
 data_zone: "Data" {
   grid-columns: 2
-  grid-gap: 160
+  grid-gap: 40
 
   db: Postgres {
     class: card
@@ -89,7 +80,7 @@ data_zone: "Data" {
 
 integrations_zone: "3rd Party Integrations" {
   grid-columns: 2
-  grid-gap: 160
+  grid-gap: 40
 
   claude: Claude API {
     class: card
@@ -102,7 +93,7 @@ integrations_zone: "3rd Party Integrations" {
 }
 
 # Pure L-to-R flow. No backward arrows.
-user_slot.cpa -> app_zone.web: "1. Upload"
+cpa -> app_zone.web: "1. Upload"
 app_zone.web -> app_zone.api: "2. POST"
 app_zone.api -> extraction_zone.ocr: "3. Enqueue"
 extraction_zone.ocr -> extraction_zone.extractor: "4. OCR text"
