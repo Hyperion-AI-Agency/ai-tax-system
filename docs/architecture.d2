@@ -106,7 +106,7 @@ processing_zone: "Extraction Pipeline" {
 
 # --- Arrows (zone-to-zone, max 6, linear) ---
 entry_slot.entry -> core.app_zone: "1. Upload"
-core.app_zone -> core.data_zone: "2. Store + create job"
-core.data_zone -> processing_zone: "3. Dequeue"
-processing_zone -> core.data_zone: "4. Persist verified"
+core.app_zone -> core.data_zone: "2. Store"
+core.app_zone -> processing_zone: "3. Enqueue"
+processing_zone -> core.app_zone: "4. Verified results"
 core.app_zone -> core.integrations_zone: "5. Export"
