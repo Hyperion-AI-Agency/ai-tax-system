@@ -30,6 +30,13 @@ classes: {
     style.fill: transparent
     style.stroke: transparent
   }
+  spacer: {
+    shape: rectangle
+    width: 160
+    height: 160
+    style.fill: transparent
+    style.stroke: transparent
+  }
 }
 
 # 3x3 layout:
@@ -37,7 +44,7 @@ classes: {
 # Row 1: user   | app  | processing
 # Row 2: spacer | integrations | spacer
 
-spacer_tl: "" { class: hidden }
+spacer_tl: "" { class: spacer }
 
 data_zone: "Data" {
   grid-columns: 2
@@ -52,7 +59,7 @@ data_zone: "Data" {
   }
 }
 
-spacer_tr: "" { class: hidden }
+spacer_tr: "" { class: spacer }
 
 entry_slot: "" { class: hidden
   entry: CPA User {
@@ -91,7 +98,7 @@ processing_zone: "Extraction Pipeline" {
   }
 }
 
-spacer_bl: "" { class: hidden }
+spacer_bl: "" { class: spacer }
 
 integrations_zone: "3rd Party Integrations" {
   grid-columns: 3
@@ -110,7 +117,7 @@ integrations_zone: "3rd Party Integrations" {
   }
 }
 
-spacer_br: "" { class: hidden }
+spacer_br: "" { class: spacer }
 
 # --- Arrows ---
 entry_slot.entry -> app_zone.web: "1. Upload"
