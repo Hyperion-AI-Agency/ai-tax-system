@@ -28,7 +28,6 @@ classes: {
   }
 }
 
-# Transparent slot so the user card stays 160x160 but the grid cell absorbs stretch.
 user_slot: "" {
   style.fill: transparent
   style.stroke: transparent
@@ -53,6 +52,20 @@ app_zone: "App" {
   }
 }
 
+data_zone: "Data" {
+  grid-columns: 2
+  grid-gap: 30
+
+  db: Postgres {
+    class: card
+    icon: https://cdn.simpleicons.org/postgresql
+  }
+  storage: S3 (KMS) {
+    class: card
+    icon: https://icons.terrastruct.com/aws%2FStorage%2FAmazon-Simple-Storage-Service-S3.svg
+  }
+}
+
 extraction_zone: "Extraction Pipeline" {
   grid-columns: 3
   grid-gap: 30
@@ -71,20 +84,6 @@ extraction_zone: "Extraction Pipeline" {
   }
 }
 
-data_zone: "Data" {
-  grid-columns: 2
-  grid-gap: 30
-
-  db: Postgres {
-    class: card
-    icon: https://cdn.simpleicons.org/postgresql
-  }
-  storage: S3 (KMS) {
-    class: card
-    icon: https://icons.terrastruct.com/aws%2FStorage%2FAmazon-Simple-Storage-Service-S3.svg
-  }
-}
-
 integrations_zone: "3rd Party Integrations" {
   grid-columns: 2
   grid-gap: 30
@@ -99,8 +98,17 @@ integrations_zone: "3rd Party Integrations" {
   }
 }
 
-# Zone-to-zone flow. No per-card arrows. Linear, L-to-R.
-user_slot.cpa -> app_zone: "1. Upload"
-app_zone -> extraction_zone: "2. Extract fields"
-extraction_zone -> data_zone: "3. Persist"
-data_zone -> integrations_zone: "4. Export"
+# FastAPI is the orchestrator: writes to data, reads from data, exports to integrations.
+# Extraction workers pull from data, write back to data.
+user_slot.cpa -> app_zone.web: "1. Upload"
+app_zone.web -> app_zone.api: "2. POST /returns"
+app_zone.api -> data_zone.storage: "3. Store file"
+app_zone.api -> data_zone.db: "4. Create job"
+data_zone.db -> extraction_zone.ocr: "5. Dequeue"
+extraction_zone.ocr -> extraction_zone.extractor: "6. OCR text"
+extraction_zone.extractor -> extraction_zone.review: "7. Low-confidence"
+extraction_zone -> data_zone.db: "8. Persist verified"
+app_zone.api -> integrations_zone.target: "9. Export"
+extraction_zone.extractor -> integrations_zone.claude: "LLM call" {
+  style.stroke-dash: 3
+}
