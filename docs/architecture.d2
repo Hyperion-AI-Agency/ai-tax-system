@@ -8,6 +8,8 @@ vars: {
 }
 
 direction: right
+grid-columns: 5
+grid-gap: 120
 
 classes: {
   card: {
@@ -26,15 +28,20 @@ classes: {
   }
 }
 
-# Entry point on the left - bare card, no zone wrapper.
-cpa: CPA User {
-  class: card
-  icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/user-round.svg
+# Transparent slot so the user card stays 160x160 but the grid cell absorbs stretch.
+user_slot: "" {
+  style.fill: transparent
+  style.stroke: transparent
+
+  cpa: CPA User {
+    class: card
+    icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/user-round.svg
+  }
 }
 
 app_zone: "App" {
   grid-columns: 2
-  grid-gap: 40
+  grid-gap: 30
 
   web: Next.js Upload {
     class: card
@@ -48,7 +55,7 @@ app_zone: "App" {
 
 extraction_zone: "Extraction Pipeline" {
   grid-columns: 3
-  grid-gap: 40
+  grid-gap: 30
 
   ocr: OCR Worker {
     class: card
@@ -66,7 +73,7 @@ extraction_zone: "Extraction Pipeline" {
 
 data_zone: "Data" {
   grid-columns: 2
-  grid-gap: 40
+  grid-gap: 30
 
   db: Postgres {
     class: card
@@ -80,7 +87,7 @@ data_zone: "Data" {
 
 integrations_zone: "3rd Party Integrations" {
   grid-columns: 2
-  grid-gap: 40
+  grid-gap: 30
 
   claude: Claude API {
     class: card
@@ -92,14 +99,8 @@ integrations_zone: "3rd Party Integrations" {
   }
 }
 
-# Pure L-to-R flow. No backward arrows.
-cpa -> app_zone.web: "1. Upload"
-app_zone.web -> app_zone.api: "2. POST"
-app_zone.api -> extraction_zone.ocr: "3. Enqueue"
-extraction_zone.ocr -> extraction_zone.extractor: "4. OCR text"
-extraction_zone.extractor -> extraction_zone.review: "5. Low-confidence"
-extraction_zone -> data_zone: "6. Persist verified"
-data_zone -> integrations_zone.target: "7. Export"
-extraction_zone.extractor -> integrations_zone.claude: "ext. LLM call" {
-  style.stroke-dash: 3
-}
+# Zone-to-zone flow. No per-card arrows. Linear, L-to-R.
+user_slot.cpa -> app_zone: "1. Upload"
+app_zone -> extraction_zone: "2. Extract fields"
+extraction_zone -> data_zone: "3. Persist"
+data_zone -> integrations_zone: "4. Export"
