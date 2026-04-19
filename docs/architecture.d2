@@ -29,9 +29,11 @@ classes: {
 }
 
 # L-to-R flow across 2 rows. app_zone is position [0,1] = top-center.
-cpa: CPA User {
-  class: card
-  icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/user-round.svg
+user_zone: "User" {
+  cpa: CPA User {
+    class: card
+    icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/user-round.svg
+  }
 }
 
 app_zone: "App" {
@@ -95,7 +97,7 @@ integrations_zone: "3rd Party Integrations" {
 }
 
 # Pure L-to-R flow. No backward arrows.
-cpa -> app_zone.web: "1. Upload"
+user_zone.cpa -> app_zone.web: "1. Upload"
 app_zone.web -> app_zone.api: "2. POST"
 app_zone.api -> extraction_zone.ocr: "3. Enqueue"
 extraction_zone.ocr -> extraction_zone.extractor: "4. OCR text"
