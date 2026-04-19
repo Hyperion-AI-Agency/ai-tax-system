@@ -41,14 +41,17 @@ client_zone: "Client" {
   }
 }
 
-backend_zone: "Extraction Pipeline" {
-  grid-columns: 2
-  grid-gap: 40
-
+gateway_zone: "Gateway" {
   api: FastAPI Gateway {
     class: card
     icon: https://cdn.simpleicons.org/fastapi
   }
+}
+
+extraction_zone: "Extraction Pipeline" {
+  grid-columns: 3
+  grid-gap: 30
+
   ocr: OCR Worker {
     class: card
     icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/scan-text.svg
@@ -65,7 +68,7 @@ backend_zone: "Extraction Pipeline" {
 
 data_zone: "Data" {
   grid-columns: 2
-  grid-gap: 40
+  grid-gap: 30
 
   db: Postgres {
     class: card
@@ -77,20 +80,19 @@ data_zone: "Data" {
   }
 }
 
-external_zone: "Target Systems" {
+integrations_zone: "3rd Party Integrations" {
   target: ProConnect / DrakeTax {
     class: card
     icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/file-text.svg
   }
 }
 
-# All writes funnel through api (no direct claude/review -> db arrows).
+# Clean flow: left-to-right, api is the single orchestrator
 cpa -> client_zone.web: "1. Upload return"
-client_zone.web -> backend_zone.api: "2. POST /returns"
-backend_zone.api -> data_zone.storage: "3. Store encrypted"
-backend_zone.api -> backend_zone.ocr: "4. Enqueue OCR"
-backend_zone.ocr -> backend_zone.claude: "5. Extract fields"
-backend_zone.claude -> backend_zone.review: "6. Low-confidence"
-backend_zone.review -> backend_zone.api: "7. CPA-approved"
-backend_zone.api -> data_zone.db: "8. Persist verified"
-backend_zone.api -> external_zone.target: "9. Export"
+client_zone.web -> gateway_zone.api: "2. POST /returns"
+gateway_zone.api -> extraction_zone.ocr: "3. Enqueue"
+extraction_zone.ocr -> extraction_zone.claude: "4. Extract"
+extraction_zone.claude -> extraction_zone.review: "5. Low-confidence"
+extraction_zone -> gateway_zone.api: "6. Verified fields"
+gateway_zone.api -> data_zone: "7. Persist"
+gateway_zone.api -> integrations_zone.target: "8. Export"
