@@ -9,7 +9,7 @@ vars: {
 
 direction: right
 grid-columns: 3
-grid-gap: 120
+grid-gap: 240
 
 classes: {
   card: {
@@ -36,7 +36,7 @@ cpa: CPA User {
 
 app_zone: "App" {
   grid-columns: 2
-  grid-gap: 80
+  grid-gap: 160
 
   web: Next.js Upload {
     class: card
@@ -50,7 +50,7 @@ app_zone: "App" {
 
 extraction_zone: "Extraction Pipeline" {
   grid-columns: 3
-  grid-gap: 80
+  grid-gap: 160
 
   ocr: OCR Worker {
     class: card
@@ -68,7 +68,7 @@ extraction_zone: "Extraction Pipeline" {
 
 data_zone: "Data" {
   grid-columns: 2
-  grid-gap: 80
+  grid-gap: 160
 
   db: Postgres {
     class: card
@@ -82,7 +82,7 @@ data_zone: "Data" {
 
 integrations_zone: "3rd Party Integrations" {
   grid-columns: 2
-  grid-gap: 80
+  grid-gap: 160
 
   claude: Claude API {
     class: card
