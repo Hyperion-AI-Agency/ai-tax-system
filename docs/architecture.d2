@@ -1,5 +1,5 @@
 # AI Tax System - Architecture
-# Render: d2 --theme 0 --pad 120 --scale 1.5 --layout elk docs/architecture.d2 docs/architecture.svg
+# Render: d2 --theme 0 --sketch --pad 120 --scale 1.5 --layout elk docs/architecture.d2 docs/architecture.svg
 
 vars: {
   d2-config: {
@@ -8,8 +8,6 @@ vars: {
 }
 
 direction: right
-grid-columns: 2
-grid-gap: 60
 
 classes: {
   card: {
@@ -28,14 +26,13 @@ classes: {
   }
 }
 
-client_zone: "Client" {
-  class: zone
-  style.fill: "#f0f9ff"
+# Entry point - outside the system
+cpa: CPA User {
+  class: card
+  icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/user-round.svg
+}
 
-  cpa: CPA User {
-    class: card
-    icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/user-round.svg
-  }
+client_zone: "Client" {
   web: Next.js Upload {
     class: card
     icon: https://cdn.simpleicons.org/nextdotjs
@@ -43,8 +40,7 @@ client_zone: "Client" {
 }
 
 backend_zone: "Extraction Pipeline" {
-  class: zone
-  style.fill: "#eef2ff"
+  direction: down
 
   api: FastAPI Gateway {
     class: card
@@ -65,8 +61,7 @@ backend_zone: "Extraction Pipeline" {
 }
 
 data_zone: "Data" {
-  class: zone
-  style.fill: "#ecfdf5"
+  direction: down
 
   db: Postgres {
     class: card
@@ -79,21 +74,20 @@ data_zone: "Data" {
 }
 
 external_zone: "Target Systems" {
-  class: zone
-  style.fill: "#fef3c7"
-
   target: ProConnect / DrakeTax {
     class: card
     icon: https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/file-text.svg
   }
 }
 
-client_zone.cpa -> client_zone.web: "1. Upload return"
+# All writes funnel through api (no direct claude/review -> db arrows,
+# which previously overlapped the api card).
+cpa -> client_zone.web: "1. Upload return"
 client_zone.web -> backend_zone.api: "2. POST /returns"
 backend_zone.api -> data_zone.storage: "3. Store encrypted"
 backend_zone.api -> backend_zone.ocr: "4. Enqueue OCR"
 backend_zone.ocr -> backend_zone.claude: "5. Extract fields"
-backend_zone.claude -> backend_zone.review: "6a. Low confidence"
-backend_zone.claude -> data_zone.db: "6b. High confidence"
-backend_zone.review -> data_zone.db: "7. After CPA review"
-backend_zone.api -> external_zone.target: "8. Export"
+backend_zone.claude -> backend_zone.review: "6. Low-confidence fields"
+backend_zone.review -> backend_zone.api: "7. CPA-approved"
+backend_zone.api -> data_zone.db: "8. Persist verified"
+backend_zone.api -> external_zone.target: "9. Export"
